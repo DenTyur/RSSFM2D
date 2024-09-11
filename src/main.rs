@@ -14,6 +14,7 @@ use std::time::Instant;
 use wave_function::WaveFunction;
 
 fn main() {
+    catalogs_check();
     // пути к сохраненным массивам
     let x_dir_path = "arrays_saved";
     let atomic_potential_path = "arrays_saved/atomic_potential.npy";
@@ -63,5 +64,20 @@ fn main() {
         );
         println!("time_step_evol={}", time.elapsed().as_secs_f64());
         println!("t.current={}, norm = {}", t.current, psi.norm());
+    }
+}
+
+fn catalogs_check() {
+    use std::fs;
+    use std::path::Path;
+    let paths = [
+        "arrays_saved",
+        "arrays_saved/time_evol",
+        "arrays_saved/time_evol/psi_x",
+    ];
+    for path in paths {
+        if !Path::new(path).exists() {
+            fs::create_dir(path).unwrap();
+        }
     }
 }

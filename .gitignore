@@ -3,3 +3,5 @@
 /src/push_git.sh
 Cargo.lock
 .gitignore
+src/imgs
+src/python/.ipynb_checkpoints
