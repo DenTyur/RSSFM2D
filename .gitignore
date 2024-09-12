@@ -1,6 +1,7 @@
 /target
 /src/arrays_saved
 /src/push_git.sh
+push_git.sh
 Cargo.lock
 .gitignore
 src/imgs
