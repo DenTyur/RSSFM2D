@@ -21,7 +21,7 @@ fn main() {
     let psi_path = "arrays_saved/psi_initial.npy";
 
     // задаем параметры временной сетки
-    let mut t = Tspace::new(0., 0.2, 5, 1);
+    let mut t = Tspace::new(0., 0.1, 200, 50);
     t.save_grid("arrays_saved/time_evol/t.npy").unwrap();
 
     // задаем координатную сетку

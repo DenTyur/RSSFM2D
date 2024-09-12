@@ -11,7 +11,6 @@ use parameters::*;
 use potentials::AtomicPotential;
 use rayon::prelude::*;
 use std::f64::consts::PI;
-use std::time::Instant;
 use wave_function::WaveFunction;
 
 pub fn time_step_evol(
@@ -53,7 +52,6 @@ pub fn x_evol_half(
     // эволюция в координатном пространстве на половину временного шага
     let j = Complex::I;
 
-    let ts = Instant::now();
     let electric_field_potential = field.potential_as_array(t.current, &x.grid[0]);
 
     multizip((
@@ -76,7 +74,6 @@ pub fn x_evol_half(
                 .exp();
         });
     });
-    println!("TIME_evol_half = {:?}", ts.elapsed());
 }
 
 pub fn x_evol(
@@ -89,7 +86,6 @@ pub fn x_evol(
     // эволюция в координатном пространстве на половину временного шага
     let j = Complex::I;
 
-    let ts = Instant::now();
     let electric_field_potential = field.potential_as_array(t.current, &x.grid[0]);
 
     multizip((
@@ -110,13 +106,11 @@ pub fn x_evol(
                     .exp();
         });
     });
-    println!("TIME_evol = {:?}", ts.elapsed());
 }
 
 pub fn p_evol(psi: &mut WaveFunction, p: &Pspace, dt: f64) {
     // эволюция в импульсном пространстве
     let j = Complex::I;
-    let ts = Instant::now();
     psi.psi
         .axis_iter_mut(Axis(0))
         .zip(p.grid[0].iter())
@@ -129,13 +123,11 @@ pub fn p_evol(psi: &mut WaveFunction, p: &Pspace, dt: f64) {
                     *psi_elem *= (-j * 0.5 * dt * (px_i.powi(2) + py_k.powi(2))).exp();
                 });
         });
-    println!("Time_p_evol = {:?}", ts.elapsed());
 }
 
 pub fn demodify_psi(psi: &mut WaveFunction, x: &Xspace, p: &Pspace) {
     // демодифицирует "psi для DFT" обратно в psi
     let j = Complex::I;
-    let ts = Instant::now();
     psi.psi
         .axis_iter_mut(Axis(0))
         .zip(x.grid[0].iter())
@@ -149,13 +141,11 @@ pub fn demodify_psi(psi: &mut WaveFunction, x: &Xspace, p: &Pspace) {
                         * (j * (p.p0[0] * x_i + p.p0[1] * y_k)).exp();
                 })
         });
-    println!("Time_demodify_psi = {:?}", ts.elapsed());
 }
 
 pub fn modify_psi(psi: &mut WaveFunction, x: &Xspace, p: &Pspace) {
     // модифицирует psi для DFT (в нашем сучае FFT)
     let j = Complex::I;
-    let ts = Instant::now();
     psi.psi
         .axis_iter_mut(Axis(0))
         .zip(x.grid[0].iter())
@@ -169,7 +159,6 @@ pub fn modify_psi(psi: &mut WaveFunction, x: &Xspace, p: &Pspace) {
                         * (-j * (p.p0[0] * x_i + p.p0[1] * y_k)).exp();
                 })
         });
-    println!("Time_modify_psi = {:?}", ts.elapsed());
 }
 
 pub struct FftMaker2d {
@@ -189,15 +178,11 @@ impl FftMaker2d {
     }
 
     pub fn do_fft(&mut self, psi: &mut WaveFunction) {
-        let ts = Instant::now();
         ndfft_par(&psi.psi, &mut self.psi_temp, &mut self.handler[0], 0);
         ndfft_par(&self.psi_temp, &mut psi.psi, &mut self.handler[1], 1);
-        println!("Time_fft = {:?}", ts.elapsed());
     }
     pub fn do_ifft(&mut self, psi: &mut WaveFunction) {
-        let ts = Instant::now();
         ndifft_par(&psi.psi, &mut self.psi_temp, &mut self.handler[1], 1);
         ndifft_par(&self.psi_temp, &mut psi.psi, &mut self.handler[0], 0);
-        println!("Time_ifft = {:?}", ts.elapsed());
     }
 }
