@@ -7,7 +7,7 @@ mod parameters;
 mod potentials;
 mod wave_function;
 use evolution::{time_step_evol, FftMaker2d};
-use field::*;
+use field::Field2D;
 use parameters::{Pspace, Tspace, Xspace};
 use potentials::AtomicPotential;
 use std::time::Instant;
@@ -31,7 +31,7 @@ fn main() {
     let p = Pspace::init(&x);
 
     // инициализируем внешнее поле
-    let field1d = Field1D {
+    let field1d = Field2D {
         amplitude: 0.045,
         omega: 0.002,
         x_envelop: 50.0001,
@@ -47,6 +47,7 @@ fn main() {
     // планировщик fft
     let mut fft = FftMaker2d::new(&x.n);
 
+    let total_time = Instant::now();
     for i in 0..t.nt {
         // сохранение временного среза волновой функции
         psi.save_psi(f!("arrays_saved/time_evol/psi_x/psi_t_{i}.npy").as_str())
@@ -62,8 +63,14 @@ fn main() {
             &p,
             &mut t,
         );
-        println!("time_step_evol={}", time.elapsed().as_secs_f64());
-        println!("t.current={}, norm = {}", t.current, psi.norm());
+        println!(
+            "STEP {}/{}  time_step = {:.5}  total_time = {:.5}",
+            i,
+            t.nt,
+            time.elapsed().as_secs_f32(),
+            total_time.elapsed().as_secs_f32()
+        );
+        println!("t.current={:.5}, norm = {}", t.current, psi.norm());
     }
 }
 
