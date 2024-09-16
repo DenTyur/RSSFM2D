@@ -2,7 +2,7 @@ use crate::field;
 use crate::parameters;
 use crate::potentials;
 use crate::wave_function;
-use field::Field1D;
+use field::Field2D;
 use itertools::multizip;
 use ndarray::prelude::*;
 use ndrustfft::{ndfft_par, ndifft_par, FftHandler};
@@ -16,7 +16,7 @@ use wave_function::WaveFunction;
 pub fn time_step_evol(
     fft: &mut FftMaker2d,
     psi: &mut WaveFunction,
-    field: &Field1D,
+    field: &Field2D,
     u: &AtomicPotential,
     x: &Xspace,
     p: &Pspace,
@@ -46,31 +46,31 @@ pub fn x_evol_half(
     psi: &mut WaveFunction,
     atomic_potential: &AtomicPotential,
     t: &Tspace,
-    field: &Field1D,
+    field: &Field2D,
     x: &Xspace,
 ) {
     // эволюция в координатном пространстве на половину временного шага
     let j = Complex::I;
 
-    let electric_field_potential = field.potential_as_array(t.current, &x.grid[0]);
+    let electric_field_potential = field.potential_as_array(t.current, x);
 
     multizip((
         psi.psi.axis_iter_mut(Axis(0)),
         atomic_potential.potential.axis_iter(Axis(0)),
-        electric_field_potential.iter(),
+        electric_field_potential[0].iter(),
     ))
     .par_bridge()
-    .for_each(|(mut psi_row, atomic_potential_row, field_potential_1e)| {
+    .for_each(|(mut psi_row, atomic_potential_row, field_potential_0ax)| {
         multizip((
             psi_row.iter_mut(),
             atomic_potential_row.iter(),
-            electric_field_potential.iter(),
+            electric_field_potential[1].iter(),
         ))
-        .for_each(|(psi_elem, atomic_potential_elem, field_potential_2e)| {
+        .for_each(|(psi_elem, atomic_potential_elem, field_potential_1ax)| {
             *psi_elem *= (-j
                 * 0.5
                 * t.dt
-                * (atomic_potential_elem - field_potential_1e - field_potential_2e))
+                * (atomic_potential_elem - field_potential_0ax - field_potential_1ax))
                 .exp();
         });
     });
@@ -80,29 +80,29 @@ pub fn x_evol(
     psi: &mut WaveFunction,
     atomic_potential: &AtomicPotential,
     t: &Tspace,
-    field: &Field1D,
+    field: &Field2D,
     x: &Xspace,
 ) {
     // эволюция в координатном пространстве на половину временного шага
     let j = Complex::I;
 
-    let electric_field_potential = field.potential_as_array(t.current, &x.grid[0]);
+    let electric_field_potential = field.potential_as_array(t.current, x);
 
     multizip((
         psi.psi.axis_iter_mut(Axis(0)),
         atomic_potential.potential.axis_iter(Axis(0)),
-        electric_field_potential.iter(),
+        electric_field_potential[0].iter(),
     ))
     .par_bridge()
-    .for_each(|(mut psi_row, atomic_potential_row, field_potential_1e)| {
+    .for_each(|(mut psi_row, atomic_potential_row, field_potential_0ax)| {
         multizip((
             psi_row.iter_mut(),
             atomic_potential_row.iter(),
-            electric_field_potential.iter(),
+            electric_field_potential[1].iter(),
         ))
-        .for_each(|(psi_elem, atomic_potential_elem, field_potential_2e)| {
+        .for_each(|(psi_elem, atomic_potential_elem, field_potential_1ax)| {
             *psi_elem *=
-                (-j * t.dt * (atomic_potential_elem - field_potential_1e - field_potential_2e))
+                (-j * t.dt * (atomic_potential_elem - field_potential_0ax - field_potential_1ax))
                     .exp();
         });
     });
